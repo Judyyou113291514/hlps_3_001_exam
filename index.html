@@ -15,26 +15,31 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* 隱藏原生下拉箭頭，讓 UI 更乾淨 */
+        select.inline-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+            padding-right: 2rem !important;
+        }
     </style>
 </head>
 <body class="bg-emerald-50/40 text-slate-800 font-sans min-h-screen relative">
 
-    <!-- 自訂提示視窗 (取代原生的 alert 與 confirm) -->
     <div id="customModal" class="fixed inset-0 bg-black/60 z-[100] hidden flex-col items-center justify-center p-4 backdrop-blur-sm transition-opacity">
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all border border-slate-100">
             <h3 id="modalTitle" class="text-2xl font-bold mb-3 text-slate-800">提示</h3>
-            <p id="modalMessage" class="text-slate-600 mb-6 text-base whitespace-pre-wrap"></p>
-            <div id="modalButtons" class="flex justify-center space-x-3">
-                <!-- 按鈕由 JS 動態生成 -->
-            </div>
+            <p id="modalMessage" class="text-slate-600 mb-6 text-base whitespace-pre-wrap leading-relaxed"></p>
+            <div id="modalButtons" class="flex justify-center space-x-3"></div>
         </div>
     </div>
 
-    <!-- 提交中 Loading 遮罩 -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black/75 z-50 hidden flex-col items-center justify-center backdrop-blur-sm">
         <div class="loader mb-4"></div>
         <p class="text-white text-lg font-semibold tracking-wider">成績傳送與試卷批改中...</p>
-        <p class="text-emerald-200 mt-2 text-sm">約需 5-10 秒，請稍候</p>
+        <p class="text-emerald-200 mt-2 text-sm">請稍候，完成後將自動跳轉</p>
     </div>
 
     <header class="bg-emerald-600 text-white p-4 shadow-md text-center">
@@ -43,7 +48,6 @@
 
     <main class="max-w-3xl mx-auto p-4 md:p-8">
         
-        <!-- 學生登入區塊 -->
         <div id="loginView" class="bg-white rounded-2xl shadow-lg p-6 md:p-10 mb-8 border border-emerald-100">
             <h2 class="text-xl font-bold mb-6 text-slate-700 flex items-center gap-2">
                 <span>📝</span> 請填寫基本資料
@@ -53,14 +57,14 @@
                     <label class="block text-sm font-semibold text-slate-700 mb-1">班級</label>
                     <select id="studentClass" class="w-full border border-slate-300 rounded-lg p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
                         <option value="">請選擇班級</option>
-                        <option value="308">308</option>
-                        <option value="309">309</option>
-                        <option value="310">310</option>
+                        <option value="308">308 班</option>
+                        <option value="309">309 班</option>
+                        <option value="310">310 班</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">座號</label>
-                    <input type="number" id="studentNumber" min="1" max="50" placeholder="例如: 08" class="w-full border border-slate-300 rounded-lg p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    <input type="number" id="studentNumber" min="1" max="50" placeholder="例如: 8" class="w-full border border-slate-300 rounded-lg p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-slate-700 mb-1">姓名</label>
@@ -72,90 +76,138 @@
             </div>
         </div>
 
-        <!-- 測驗作答區塊 -->
         <div id="quizView" class="hidden">
             <div class="flex justify-between items-center mb-5 bg-white p-4 rounded-xl shadow-sm border border-emerald-100">
                 <span id="studentInfoDisplay" class="font-bold text-slate-700"></span>
                 <span class="font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-sm">總配分: 100 分</span>
             </div>
             
-            <div id="questionsContainer" class="space-y-6">
-                <!-- 題目卡片由 JS 動態生成 -->
-            </div>
+            <div id="questionsContainer" class="space-y-6"></div>
 
             <div class="mt-8 mb-12">
-                <button onclick="trySubmitQuiz()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-2xl shadow-lg transition-transform transform active:scale-[0.99] text-lg">
-                    提交試卷
+                <button onclick="trySubmitQuiz()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-2xl shadow-lg transition-transform transform active:scale-[0.99] text-lg tracking-wider">
+                    👉 提交試卷
                 </button>
             </div>
         </div>
 
-        <!-- 測驗成績結算區塊 -->
         <div id="resultView" class="hidden bg-white rounded-2xl shadow-xl p-6 md:p-10 text-center border border-emerald-100">
             <div class="text-6xl mb-4">🌻</div>
             <h2 class="text-3xl font-extrabold text-slate-800 mb-2">測驗完成！</h2>
-            <p class="text-lg text-slate-600 mb-6">你的總得分為： <span id="finalScoreDisplay" class="text-4xl font-black text-emerald-600"></span> 分</p>
-            <div class="bg-emerald-50 text-emerald-800 p-4 rounded-xl mb-6 text-sm leading-relaxed border border-emerald-200">
+            <p class="text-lg text-slate-600 mb-6">你的總得分為： <span id="finalScoreDisplay" class="text-5xl font-black text-emerald-600 mx-2"></span> 分</p>
+            <div id="resultMessage" class="bg-emerald-50 text-emerald-800 p-4 rounded-xl mb-6 text-sm leading-relaxed border border-emerald-200">
                 答題紀錄已同步至 Google 試算表，個人的專屬錯題複習單也已為你儲存於雲端硬碟中！
             </div>
             <button onclick="location.reload()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 px-8 rounded-xl transition-colors">
-                返回首頁
+                返回首頁重新測驗
             </button>
         </div>
 
     </main>
 
     <script>
-        // 後端 Google Apps Script 網址
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzbuyKv8IC_rIdsEU172UQXsX4pr-lnt7dRq5VpZ0luHma8qVpTPdG-fm10mZQv811Z/exec"; 
 
-        // 3年級「植物大發現」完整素養題庫 (已調整配分為：是非3分、選擇3分、填空6分、配合8分)
         const questionBank = [
-            // ========== 是非題 (每題 3 分，需抽 10 題 = 30分) ==========
-            { id: 1, type: '是非題', points: 3, concept: 'observe_sense', question: '觀察植物時，我們可以用眼睛看葉子形狀、用手摸樹皮粗細，但不能隨便把路邊不認識的果實摘下來吃。', options: ['O', 'X'], answer: 'O', explanation: '野生植物可能具有毒性，觀察時切勿任意放入口中食用。' },
-            { id: 2, type: '是非題', points: 3, concept: 'plant_organs', question: '一株完整的開花植物，通常具備「根、莖、葉、花、果實、種子」六大基本構造。', options: ['O', 'X'], answer: 'O', explanation: '開花植物的基本構造包含根、莖、葉、花、果實、種子六個部分。' },
-            { id: 3, type: '是非題', points: 3, concept: 'leaf_shape_sun', question: '植物的葉片通常呈現扁平狀，這主要是為了減少重量，避免將莖壓彎。', options: ['O', 'X'], answer: 'X', explanation: '葉片呈扁平狀是為了增加吸收陽光的表面積，以製造養分。' },
-            { id: 4, type: '是非題', points: 3, concept: 'leaf_order_def', question: '葉子生長在莖上的固定位置稱為「節」，而葉子在節上不同的排列方式稱為「葉序」。', options: ['O', 'X'], answer: 'O', explanation: '葉子長在莖上的位置叫節，排列方式稱為葉序。' },
-            { id: 5, type: '是非題', points: 3, concept: 'leaf_whorled', question: '黑板樹在同一個節上同時長出 3 片或更多的葉子，這種排列方式稱為「輪生」。', options: ['O', 'X'], answer: 'O', explanation: '一個節上長出3片或3片以上的葉子稱為輪生。' },
-            { id: 6, type: '是非題', points: 3, concept: 'stem_creeper', question: '牽牛花的莖柔軟細長，可以自己直立向上生長，不需要依附任何竹竿或棚架。', options: ['O', 'X'], answer: 'X', explanation: '牽牛花屬於藤本莖，柔軟無法直立，需要攀附在其他物體上生長。' },
-            { id: 7, type: '是非題', points: 3, concept: 'root_fibrous', question: '餐桌上常吃的青蔥和水稻，它們的根細細小小的像鬍鬚一樣，屬於「鬚根」。', options: ['O', 'X'], answer: 'O', explanation: '蔥、蒜和水稻的根沒有明顯主根，屬於生長在淺層的鬚根。' },
-            { id: 8, type: '是非題', points: 3, concept: 'flower_complete', question: '一朵花如果同時具有花萼、花瓣、雄蕊和雌蕊四種構造，就稱為「完全花」。', options: ['O', 'X'], answer: 'O', explanation: '四種構造皆齊全的花稱為完全花；缺少其中任何一項則為不完全花。' },
-            { id: 9, type: '是非題', points: 3, concept: 'flower_calyx', question: '花萼位在花朵的最外圈，主要任務是負責吸引蜜蜂前來傳授花粉。', options: ['O', 'X'], answer: 'X', explanation: '花萼位於最外圈，功能是保護花蕾與花瓣；吸引昆蟲主要是花瓣的功用。' },
-            { id: 10, type: '是非題', points: 3, concept: 'plant_soil_protect', question: '植物的根深入土壤中除了吸收水分外，還能緊抓土壤，具有預防土石流和水土保持的重要功能。', options: ['O', 'X'], answer: 'O', explanation: '植物發達的根系具有穩固泥土、保持水土的作用。' },
-            { id: 11, type: '是非題', points: 3, concept: 'leaf_parts', question: '葉片通常包含「葉片」和「葉柄」兩個主要部分。', options: ['O', 'X'], answer: 'O', explanation: '葉子主要由寬廣的葉片和連接莖的葉柄組成。' },
-            { id: 12, type: '是非題', points: 3, concept: 'leaf_margin', question: '葉片邊緣呈現一凸一凹像鋸子牙齒的形狀，稱為「平滑狀」葉緣。', options: ['O', 'X'], answer: 'X', explanation: '一凸一凹的形狀稱為「鋸齒狀」葉緣；平滑無缺口的才是「平滑狀」。' },
+            // ========== 是非題 (每題 2 分，題庫 14 題) ==========
+            { id: 1, type: '是非題', points: 2, question: '觀察植物時，我們可以用眼睛看葉子形狀、用手摸樹皮粗細，但不能隨便把不認識的果實放進嘴裡吃。', options: ['O', 'X'], answer: 'O', explanation: '野生植物可能具有毒性，觀察時切勿任意食用。' },
+            { id: 2, type: '是非題', points: 2, question: '一株完整的開花植物，基本構造包含根、莖、葉、花、果實、種子。', options: ['O', 'X'], answer: 'O', explanation: '開花植物的基本構造包含這六個部分。' },
+            { id: 3, type: '是非題', points: 2, question: '葉片通常呈現扁平狀，這主要是為了減少重量，避免將莖壓彎。', options: ['O', 'X'], answer: 'X', explanation: '葉片扁平是為了增加吸收陽光的表面積。' },
+            { id: 4, type: '是非題', points: 2, question: '葉片邊緣呈現一凸一凹像鋸子牙齒的形狀，稱為「平滑狀」葉緣。', options: ['O', 'X'], answer: 'X', explanation: '一凸一凹的稱為「鋸齒狀」葉緣。' },
+            { id: 5, type: '是非題', points: 2, question: '葉片上的紋路稱為葉脈，有網狀脈與平行脈等不同的形狀。', options: ['O', 'X'], answer: 'O', explanation: '葉脈是植物葉片的維管束，主要有網狀與平行兩種。' },
+            { id: 6, type: '是非題', points: 2, question: '牽牛花的莖柔軟細長，可以自己直立向上生長，不需要依附任何棚架。', options: ['O', 'X'], answer: 'X', explanation: '牽牛花屬於藤本莖，需要攀附在其他物體上生長。' },
+            { id: 7, type: '是非題', points: 2, question: '餐桌上常吃的青蔥，它的根細細小小的像鬍鬚一樣，屬於「鬚根」。', options: ['O', 'X'], answer: 'O', explanation: '蔥的根沒有明顯主根，屬於鬚根。' },
+            { id: 8, type: '是非題', points: 2, question: '花萼位在花朵的最外圈，主要任務是負責吸引蜜蜂前來傳授花粉。', options: ['O', 'X'], answer: 'X', explanation: '花萼位於最外圈，功能是保護花蕾；吸引昆蟲是花瓣的功用。' },
+            { id: 9, type: '是非題', points: 2, question: '植物的根深入土壤中，除了吸收水分，還能緊抓土壤，預防土石流。', options: ['O', 'X'], answer: 'O', explanation: '植物發達的根系具有穩固泥土、保持水土的作用。' },
+            { id: 10, type: '是非題', points: 2, question: '植物開花結果後，種子通常會藏在果實裡面，在適當環境下會發芽。', options: ['O', 'X'], answer: 'O', explanation: '果實內部包藏著種子，具有繁衍後代的功能。' },
+            { id: 11, type: '是非題', points: 2, question: '葉子生長在莖上的固定位置，這個位置在植物學上稱為「節」。', options: ['O', 'X'], answer: 'O', explanation: '莖上長葉子的地方稱為節。' },
+            { id: 12, type: '是非題', points: 2, question: '植物莖的主要功能，是負責從土壤中吸收大量的水分和養分。', options: ['O', 'X'], answer: 'X', explanation: '吸收水分是「根」的功能，莖主要是負責「支撐」和「輸送」。' },
+            { id: 13, type: '是非題', points: 2, question: '黑板樹在同一個節上同時長出3片或更多的葉子，這種排列稱為「輪生」。', options: ['O', 'X'], answer: 'O', explanation: '一個節長出3片以上葉子為輪生。' },
+            { id: 14, type: '是非題', points: 2, question: '一朵花如果同時具有花萼、花瓣、雄蕊和雌蕊，就稱為「完全花」。', options: ['O', 'X'], answer: 'O', explanation: '四種構造齊全的花稱為完全花。' },
 
-            // ========== 選擇題 (每題 3 分，需抽 12 題 = 36分) ==========
-            { id: 13, type: '選擇題', points: 3, concept: 'leaf_opposite', question: '番石榴（芭樂）的葉子在莖的同一個節上「兩兩相對成雙長出」，請問這是哪一種葉序？', options: ['互生', '對生', '輪生', '叢生'], answer: '對生', explanation: '一個節長出兩片葉子且相對而生，稱為「對生」。' },
-            { id: 14, type: '選擇題', points: 3, concept: 'leaf_alternate', question: '「楓香」的葉子在莖上是「一個節只長出一片葉子」，這屬於哪一種葉序？', options: ['互生', '對生', '輪生', '散生'], answer: '互生', explanation: '一個節只長出一片葉子稱為「互生」。' },
-            { id: 15, type: '選擇題', points: 3, concept: 'stem_woody', question: '校園裡的「樟樹」樹幹粗壯高大、堅硬挺拔，它屬於哪一種莖？', options: ['木本莖', '草本莖', '藤本莖', '匍匐莖'], answer: '木本莖', explanation: '樟樹、榕樹等樹木具有高大堅固的木本莖。' },
-            { id: 16, type: '選擇題', points: 3, concept: 'root_taproot', question: '媽媽在洗菠菜時，發現它中央有一條特別粗長的主根深入土壤，這屬於哪種根系？', options: ['鬚根', '軸根', '氣生根', '呼吸根'], answer: '軸根', explanation: '有一條明顯粗大主根向下深入的稱為「軸根」，如菠菜、莧菜。' },
-            { id: 17, type: '選擇題', points: 3, concept: 'flower_parts_stamen', question: '在花朵中通常數量較多、頂端長有花藥專門「產生花粉」的器官是哪一個？', options: ['花萼', '花瓣', '雄蕊', '雌蕊'], answer: '雄蕊', explanation: '雄蕊是雄性器官，負責產生花粉；雌蕊則在中央受粉後發育成果實。' },
-            { id: 18, type: '選擇題', points: 3, concept: 'fruit_longkui', question: '路邊常見的龍葵，當果實完全成熟時會由綠色轉變為什麼顏色以吸引動物食用？', options: ['鮮紅色', '紫黑色', '亮黃色', '純白色'], answer: '紫黑色', explanation: '龍葵未熟時為綠色，成熟時轉為深紫黑色。' },
-            { id: 19, type: '選擇題', points: 3, concept: 'potato_organ', question: '我們常吃的「馬鈴薯」，在植物學上屬於植物的哪一個器官儲存養分變來的？', options: ['根', '莖', '葉', '果實'], answer: '莖', explanation: '馬鈴薯是地下膨大的「塊莖」；地瓜則是「塊根」。' },
-            { id: 20, type: '選擇題', points: 3, concept: 'vein_parallel', question: '下列哪一種植物的葉片脈紋屬於一條條平行的「平行脈」？', options: ['水稻', '樟樹', '番石榴', '楓香'], answer: '水稻', explanation: '水稻、玉米、百合等植物的葉片葉脈多為平行脈。' },
-            { id: 21, type: '選擇題', points: 3, concept: 'forest_bath', question: '走進綠意盎然的森林中，呼吸新鮮空氣並感受芬多精，這種有益身心的休閒活動叫什麼？', options: ['土石流', '森林浴', '溫室效應', '水土保持'], answer: '森林浴', explanation: '漫步於森林中親近自然、呼吸樹木芬多精的活動稱為森林浴。' },
-            { id: 22, type: '選擇題', points: 3, concept: 'seed_dispersal_burr', question: '大花咸豐草（鬼針草）的種子長有倒鉤刺，它主要是依靠什麼方式來傳播種子？', options: ['風力吹拂', '水流漂浮', '黏附在動物毛皮或人類衣物上', '自力彈射'], answer: '黏附在動物毛皮或人類衣物上', explanation: '倒鉤刺能鉤住動物毛皮或衣服，藉此將種子帶往遠方繁衍。' },
-            { id: 23, type: '選擇題', points: 3, concept: 'sense_touch', question: '小華用手輕輕觸摸龍葵的莖，發現「摸起來有細細毛毛的感覺」，請問小華使用了哪種感官？', options: ['視覺', '聽覺', '觸覺', '味覺'], answer: '觸覺', explanation: '用手觸摸感知物體表面特徵屬於觸覺。' },
-            { id: 24, type: '選擇題', points: 3, concept: 'not_plant_organ', question: '下列哪一項「不屬於」植物的六大基本構造之一？', options: ['樹皮', '根', '莖', '葉'], answer: '樹皮', explanation: '植物六大基本構造為：根、莖、葉、花、果實、種子。樹皮是莖表面的一部分。' },
-            { id: 25, type: '選擇題', points: 3, concept: 'stem_herb', question: '牽牛花沿著花架一圈一圈向上爬，它的莖屬於什麼形態？', options: ['木本莖', '草本莖', '藤本莖', '水生莖'], answer: '藤本莖', explanation: '需要攀附在其他物體上生長的莖稱為藤本莖。' },
+            // ========== 選擇題 (每題 3 分，題庫 16 題) ==========
+            { id: 15, type: '選擇題', points: 3, question: '小華用手輕輕觸摸植物的莖，發現「摸起來有細細毛毛的感覺」，他使用了哪種感官？', options: ['視覺', '聽覺', '觸覺', '嗅覺'], answer: '觸覺', explanation: '用手觸摸感知表面屬於觸覺。' },
+            { id: 16, type: '選擇題', points: 3, question: '番石榴(芭樂)的葉子在同一個節上「兩兩相對成雙長出」，這是哪種葉序？', options: ['互生', '對生', '輪生', '叢生'], answer: '對生', explanation: '一個節長出兩片葉子且相對而生，稱為對生。' },
+            { id: 17, type: '選擇題', points: 3, question: '「楓香」的葉子在莖上是「一個節只長出一片葉子」，這屬於哪種葉序？', options: ['互生', '對生', '輪生', '散生'], answer: '互生', explanation: '一個節只長出一片葉子稱為互生。' },
+            { id: 18, type: '選擇題', points: 3, question: '校園裡的「樟樹」樹幹粗壯高大、堅硬挺拔，它屬於哪一種莖？', options: ['木本莖', '草本莖', '藤本莖', '匍匐莖'], answer: '木本莖', explanation: '高大堅固的樹幹屬於木本莖。' },
+            { id: 19, type: '選擇題', points: 3, question: '「昭和草」的莖比較細小、綠色低矮，柔軟但仍能直立生長，屬於什麼莖？', options: ['木本莖', '草本莖', '藤本莖', '水生莖'], answer: '草本莖', explanation: '低矮柔軟呈綠色的通常為草本莖。' },
+            { id: 20, type: '選擇題', points: 3, question: '菠菜的根部中央有一條特別粗長的主根深入土壤，這屬於哪種根系？', options: ['鬚根', '軸根', '氣生根', '呼吸根'], answer: '軸根', explanation: '有明顯粗大主根向下深入的稱為軸根。' },
+            { id: 21, type: '選擇題', points: 3, question: '在花朵中，頂端長有花藥，專門負責「產生花粉」的構造是哪一個？', options: ['花萼', '花瓣', '雄蕊', '雌蕊'], answer: '雄蕊', explanation: '雄蕊是雄性器官，負責產生花粉。' },
+            { id: 22, type: '選擇題', points: 3, question: '帶有鮮豔色彩或香氣，用來吸引昆蟲幫忙傳粉的構造是？', options: ['花萼', '雄蕊', '雌蕊', '花瓣'], answer: '花瓣', explanation: '花瓣的色彩與氣味是吸引授粉者的重要特徵。' },
+            { id: 23, type: '選擇題', points: 3, question: '龍葵的果實完全成熟時，會由綠色轉變為什麼顏色以吸引動物食用？', options: ['鮮紅色', '紫黑色', '亮黃色', '純白色'], answer: '紫黑色', explanation: '龍葵未熟為綠色，成熟轉為深紫黑色。' },
+            { id: 24, type: '選擇題', points: 3, question: '下列哪一種植物的葉片脈紋屬於一條條平行的「平行脈」？', options: ['水稻', '樟樹', '番石榴', '楓香'], answer: '水稻', explanation: '水稻、玉米等禾本科植物的葉脈多為平行脈。' },
+            { id: 25, type: '選擇題', points: 3, question: '大花咸豐草(鬼針草)的種子長有倒鉤刺，它主要是依靠什麼方式傳播種子？', options: ['風力吹拂', '水流漂浮', '黏附在動物皮毛上', '自力彈射'], answer: '黏附在動物皮毛上', explanation: '倒鉤刺能鉤住動物毛皮，藉此散播種子。' },
+            { id: 26, type: '選擇題', points: 3, question: '走進綠意盎然的森林中，呼吸新鮮空氣並感受芬多精，這種休閒活動叫什麼？', options: ['土石流', '森林浴', '溫室效應', '水土保持'], answer: '森林浴', explanation: '漫步森林呼吸芬多精稱為森林浴。' },
+            { id: 27, type: '選擇題', points: 3, question: '下列哪一項「不屬於」植物的六大基本構造之一？', options: ['樹皮', '根', '莖', '葉'], answer: '樹皮', explanation: '樹皮是莖表面的一部分，非獨立的基本構造。' },
+            { id: 28, type: '選擇題', points: 3, question: '我們常吃的「馬鈴薯」，在植物學上屬於哪一個器官儲存養分變來的？', options: ['根', '莖', '葉', '果實'], answer: '莖', explanation: '馬鈴薯是地下膨大的塊莖；地瓜則是塊根。' },
+            { id: 29, type: '選擇題', points: 3, question: '葉片邊緣沒有一凸一凹的缺口，摸起來很平順，我們稱這種葉緣為？', options: ['鋸齒狀', '平滑狀', '波浪狀', '針刺狀'], answer: '平滑狀', explanation: '邊緣無缺口、平整的稱為平滑狀葉緣。' },
+            { id: 30, type: '選擇題', points: 3, question: '牽牛花沿著花架一圈一圈向上爬，它的莖屬於什麼形態？', options: ['木本莖', '草本莖', '藤本莖', '水生莖'], answer: '藤本莖', explanation: '需要攀附在其他物體上生長的莖稱為藤本莖。' },
 
-            // ========== 填空題 (每題 6 分，需抽 3 題 = 18分) ==========
-            { id: 26, type: '填空題', points: 6, concept: 'plant_organs_blank', question: '一株完整的植物，基本構造通常包括：根、莖、葉、花、[blank]和[blank]。', answer: ['果實', '種子'], explanation: '植物基本六大器官包含根、莖、葉、花、果實、種子。' },
-            { id: 27, type: '填空題', points: 6, concept: 'leaf_structure_blank', question: '葉子主要包含了扁平的[blank]以及連接在莖上的[blank]。', answer: ['葉片', '葉柄'], explanation: '葉子由葉片與葉柄組成。' },
-            { id: 28, type: '填空題', points: 6, concept: 'stem_function_blank', question: '植物的「莖」具有[blank]植物身體、並讓葉片爭取[blank]的重要功能。', answer: ['支撐', '陽光'], explanation: '莖負責支撐植物並向上挺立以獲取充分陽光。' },
-            { id: 29, type: '填空題', points: 6, concept: 'root_function_blank', question: '植物的「根」主要功用是[blank]植物身體，並吸收土壤裡面的[blank]和養分。', answer: ['固定', '水分'], explanation: '根的功能包括固定植物體及吸收土壤裡的水分與養分。' },
-
-            // ========== 配合題 (每題 8 分，需抽 2 題 = 16分) ==========
-            { id: 30, type: '配合題', points: 8, concept: 'stem_match_woody', question: '【莖的配對】通常質地粗壯、高大堅硬，且可以一直直立向上生長的木本莖代表植物是？', options: ['樟樹', '昭和草', '牽牛花', '水稻'], answer: '樟樹', explanation: '樟樹為高大堅固的木本莖。' },
-            { id: 31, type: '配合題', points: 8, concept: 'stem_match_herb', question: '【莖的配對】通常較細小、綠色低矮，但仍可以直立向上生長的草本莖代表植物是？', options: ['樟樹', '昭和草', '牽牛花', '黑板樹'], answer: '昭和草', explanation: '昭和草為典型草本莖。' },
-            { id: 32, type: '配合題', points: 8, concept: 'leaf_order_match_alternate', question: '【葉序配對】在莖的 1 個節上只長出 1 片葉子的「互生」代表植物是？', options: ['楓香', '番石榴', '黑板樹', '牽牛花'], answer: '楓香', explanation: '楓香為互生葉序的代表植物。' }
+            // ========== 多格下拉題 (題組克漏字) (每格 2 分，共 6 題 17 格 = 34 分) ==========
+            { 
+                id: 31, type: '多格下拉題', 
+                question: '植物的【blank_1】可以吸收水分，【blank_2】能支撐身體，而【blank_3】主要負責接收陽光製造養分。',
+                blanks: [
+                    { id: 'blank_1', options: ['根', '莖', '葉', '花'], answer: '根', points: 2 },
+                    { id: 'blank_2', options: ['根', '莖', '葉', '果實'], answer: '莖', points: 2 },
+                    { id: 'blank_3', options: ['莖', '葉', '果實', '種子'], answer: '葉', points: 2 }
+                ],
+                explanation: '根部負責吸收，莖部負責支撐，葉片負責製造養分。' 
+            },
+            { 
+                id: 32, type: '多格下拉題', 
+                question: '葉子的排列方式稱為葉序。一個節上只有1片葉子稱為【blank_1】；有2片葉子對稱生長稱為【blank_2】；有3片或更多則稱為【blank_3】。',
+                blanks: [
+                    { id: 'blank_1', options: ['互生', '對生', '輪生'], answer: '互生', points: 2 },
+                    { id: 'blank_2', options: ['互生', '對生', '輪生'], answer: '對生', points: 2 },
+                    { id: 'blank_3', options: ['互生', '對生', '輪生'], answer: '輪生', points: 2 }
+                ],
+                explanation: '互生(1片)、對生(2片)、輪生(3片以上)。' 
+            },
+            { 
+                id: 33, type: '多格下拉題', 
+                question: '根的種類主要分為兩種：像菠菜有一條明顯主根的稱為【blank_1】；像青蔥一樣細小叢生的稱為【blank_2】。',
+                blanks: [
+                    { id: 'blank_1', options: ['軸根', '鬚根', '塊根'], answer: '軸根', points: 2 },
+                    { id: 'blank_2', options: ['軸根', '鬚根', '塊根'], answer: '鬚根', points: 2 }
+                ],
+                explanation: '軸根有直立的主根，鬚根則呈細絲叢狀。' 
+            },
+            { 
+                id: 34, type: '多格下拉題', 
+                question: '觀察完全花：最外圍保護花蕾的是【blank_1】；顏色鮮豔吸引昆蟲的是【blank_2】；中央會發育成果實的是【blank_3】。',
+                blanks: [
+                    { id: 'blank_1', options: ['花萼', '花瓣', '雌蕊', '雄蕊'], answer: '花萼', points: 2 },
+                    { id: 'blank_2', options: ['花萼', '花瓣', '雌蕊', '雄蕊'], answer: '花瓣', points: 2 },
+                    { id: 'blank_3', options: ['花萼', '花瓣', '雌蕊', '雄蕊'], answer: '雌蕊', points: 2 }
+                ],
+                explanation: '花萼保護花朵，花瓣吸引昆蟲，雌蕊負責孕育果實。' 
+            },
+            { 
+                id: 35, type: '多格下拉題', 
+                question: '不同植物有不同型態的莖：樟樹高大堅硬屬於【blank_1】；昭和草柔軟矮小屬於【blank_2】；牽牛花需要攀附生長屬於【blank_3】。',
+                blanks: [
+                    { id: 'blank_1', options: ['木本莖', '草本莖', '藤本莖'], answer: '木本莖', points: 2 },
+                    { id: 'blank_2', options: ['木本莖', '草本莖', '藤本莖'], answer: '草本莖', points: 2 },
+                    { id: 'blank_3', options: ['木本莖', '草本莖', '藤本莖'], answer: '藤本莖', points: 2 }
+                ],
+                explanation: '木本高大堅硬，草本柔軟矮小，藤本須攀附。' 
+            },
+            { 
+                id: 36, type: '多格下拉題',
+                question: '果實與種子的傳播：龍葵果實成熟後會變成【blank_1】吸引鳥類；大花咸豐草的種子長有【blank_2】可黏附在動物身上；這些都能幫助植物【blank_3】。',
+                blanks: [
+                    { id: 'blank_1', options: ['亮黃色', '紫黑色', '鮮紅色'], answer: '紫黑色', points: 2 },
+                    { id: 'blank_2', options: ['倒鉤刺', '翅膀', '絨毛'], answer: '倒鉤刺', points: 2 },
+                    { id: 'blank_3', options: ['製造養分', '傳播種子', '吸收水分'], answer: '傳播種子', points: 2 }
+                ],
+                explanation: '動植物共生的特性，能幫助種子散播到遠處繁衍。' 
+            }
         ];
 
         let currentQuiz = [];
         let studentData = {};
 
-        // 自訂 Modal 提示視窗
         function showModal(title, message, type = 'alert', onConfirm = null) {
             const modal = document.getElementById('customModal');
             document.getElementById('modalTitle').innerText = title;
@@ -166,13 +218,13 @@
             
             if (type === 'confirm') {
                 const cancelBtn = document.createElement('button');
-                cancelBtn.className = 'px-5 py-2.5 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 font-bold transition-colors';
-                cancelBtn.innerText = '取消';
+                cancelBtn.className = 'px-6 py-2.5 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 font-bold transition-colors';
+                cancelBtn.innerText = '返回檢查';
                 cancelBtn.onclick = () => modal.classList.add('hidden');
                 
                 const okBtn = document.createElement('button');
-                okBtn.className = 'px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-bold transition-colors shadow-md';
-                okBtn.innerText = '確定';
+                okBtn.className = 'px-6 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-bold transition-colors shadow-md';
+                okBtn.innerText = '確定交卷';
                 okBtn.onclick = () => {
                     modal.classList.add('hidden');
                     if (onConfirm) onConfirm();
@@ -182,7 +234,7 @@
                 btnContainer.appendChild(okBtn);
             } else {
                 const okBtn = document.createElement('button');
-                okBtn.className = 'px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-bold transition-colors w-full shadow-md';
+                okBtn.className = 'px-8 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-bold transition-colors shadow-md';
                 okBtn.innerText = '我知道了';
                 okBtn.onclick = () => {
                     modal.classList.add('hidden');
@@ -195,21 +247,34 @@
             modal.classList.add('flex');
         }
 
-        // 開始測驗
         function startQuiz() {
             const cls = document.getElementById('studentClass').value;
             const num = document.getElementById('studentNumber').value;
             const name = document.getElementById('studentName').value.trim();
 
             if (!cls || !num || !name) {
-                showModal('資料未填齊全', '請完整選擇班級，並填寫座號與姓名！');
+                showModal('資料未填寫完整', '請確認是否已選擇班級，並填寫座號與姓名！');
                 return;
             }
 
             studentData = { class: cls, number: String(num).padStart(2, '0'), name: name };
             
-            // 隨機抽選 100 分試卷（涵蓋 5 大題型、不重複概念、隨機亂序）
-            currentQuiz = generateExact100Quiz(questionBank);
+            let selected = [];
+            
+            // 抽 12 題是非 (24分)
+            let tfPool = questionBank.filter(q => q.type === '是非題').sort(() => 0.5 - Math.random());
+            selected.push(...tfPool.slice(0, 12));
+
+            // 抽 14 題選擇 (42分)
+            let mcPool = questionBank.filter(q => q.type === '選擇題').sort(() => 0.5 - Math.random());
+            selected.push(...mcPool.slice(0, 14));
+
+            // 納入全部 6 題多重下拉 (34分)
+            let multiPool = questionBank.filter(q => q.type === '多格下拉題');
+            selected.push(...multiPool);
+
+            // 再次隨機打亂所有題目順序
+            currentQuiz = selected.sort(() => 0.5 - Math.random());
             
             document.getElementById('loginView').classList.add('hidden');
             document.getElementById('quizView').classList.remove('hidden');
@@ -217,50 +282,6 @@
 
             renderQuiz();
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // 抽題演算法：剛好 100 分 (是非30 + 選擇36 + 填空18 + 配合16)，無重複概念，題序隨機
-        function generateExact100Quiz(bank) {
-            const typeRequirements = [
-                { type: '是非題', targetCount: 10 }, // 10 * 3 = 30分
-                { type: '選擇題', targetCount: 12 }, // 12 * 3 = 36分
-                { type: '填空題', targetCount: 3 },  // 3 * 6 = 18分
-                { type: '配合題', targetCount: 2 }   // 2 * 8 = 16分
-                // 問答題本次不納入，以符合總分100
-            ];
-
-            let selectedQuestions = [];
-            let usedConcepts = new Set();
-
-            typeRequirements.forEach(req => {
-                let pool = bank.filter(q => q.type === req.type);
-                // 充分隨機打散候選題
-                pool.sort(() => 0.5 - Math.random());
-
-                let count = 0;
-                for (let q of pool) {
-                    if (!usedConcepts.has(q.concept)) {
-                        selectedQuestions.push(q);
-                        usedConcepts.add(q.concept);
-                        count++;
-                        if (count >= req.targetCount) break;
-                    }
-                }
-
-                // 備用機制：如果題庫概念重疊較多，允許放入同概念題目以補足題數
-                if (count < req.targetCount) {
-                    for (let q of pool) {
-                        if (!selectedQuestions.some(item => item.id === q.id)) {
-                            selectedQuestions.push(q);
-                            count++;
-                            if (count >= req.targetCount) break;
-                        }
-                    }
-                }
-            });
-
-            // 將所有抽出的題目再次徹底「打散亂序」
-            return selectedQuestions.sort(() => 0.5 - Math.random());
         }
 
         function renderQuiz() {
@@ -271,19 +292,21 @@
                 const card = document.createElement('div');
                 card.className = "bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100/80 transition-all hover:shadow-md";
                 
+                let qPoints = q.type === '多格下拉題' ? q.blanks.reduce((sum, b) => sum + b.points, 0) : q.points;
+                
                 let innerHTML = `
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-sm font-bold text-emerald-800 bg-emerald-100/70 px-3 py-1 rounded-full">第 ${index + 1} 題 · [${q.type}]</span>
-                        <span class="bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold px-2.5 py-0.5 rounded-full">${q.points} 分</span>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm font-bold text-emerald-800 bg-emerald-100/70 px-3 py-1.5 rounded-full tracking-wide">第 ${index + 1} 題 · [${q.type}]</span>
+                        <span class="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">${qPoints} 分</span>
                     </div>
                 `;
 
                 if (q.type === '是非題' || q.type === '選擇題') {
-                    innerHTML += `<h3 class="text-base md:text-lg font-bold text-slate-800 mb-4 leading-relaxed">${q.question}</h3><div class="space-y-2">`;
+                    innerHTML += `<h3 class="text-base md:text-lg font-bold text-slate-800 mb-5 leading-relaxed">${q.question}</h3><div class="space-y-3">`;
                     q.options.forEach((opt, oIdx) => {
                         const optId = `q_${q.id}_opt_${oIdx}`;
                         innerHTML += `
-                            <label for="${optId}" class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-emerald-50/50 hover:border-emerald-300 transition-colors">
+                            <label for="${optId}" class="flex items-center p-3 border border-slate-200 rounded-xl cursor-pointer hover:bg-emerald-50/60 hover:border-emerald-300 transition-colors">
                                 <input type="radio" name="q_${q.id}" id="${optId}" value="${opt}" class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                                 <span class="ml-3 text-slate-700 font-medium">${opt}</span>
                             </label>
@@ -291,36 +314,15 @@
                     });
                     innerHTML += `</div>`;
                 } 
-                else if (q.type === '填空題') {
-                    let parts = q.question.split('[blank]');
-                    innerHTML += `<div class="flex items-center flex-wrap leading-loose text-base md:text-lg font-bold text-slate-800 mt-2">`;
-                    parts.forEach((part, i) => {
-                        innerHTML += `<span>${part}</span>`;
-                        if (i < parts.length - 1) {
-                            innerHTML += `<input type="text" id="q_${q.id}_blank_${i}" class="mx-2 w-24 border-b-2 border-emerald-500 focus:border-emerald-700 outline-none text-center text-emerald-800 font-extrabold bg-emerald-50/50 rounded py-0.5" placeholder="請填寫">`;
-                        }
+                else if (q.type === '多格下拉題') {
+                    let htmlText = q.question;
+                    q.blanks.forEach((b, bIdx) => {
+                        let selectHtml = `<select id="q_${q.id}_${b.id}" class="inline-select inline-block border-b-2 border-emerald-400 bg-emerald-50/50 text-emerald-800 font-bold px-2 py-1 mx-1 my-1 outline-none focus:border-emerald-600 focus:bg-emerald-100 transition-colors rounded-t-md cursor-pointer text-base"><option value="" disabled selected>請選擇...</option>`;
+                        b.options.forEach(opt => { selectHtml += `<option value="${opt}">${opt}</option>`; });
+                        selectHtml += `</select>`;
+                        htmlText = htmlText.replace(`【${b.id}】`, selectHtml);
                     });
-                    innerHTML += `</div>`;
-                }
-                else if (q.type === '配合題') {
-                    innerHTML += `<h3 class="text-base md:text-lg font-bold text-slate-800 mb-4 leading-relaxed">${q.question}</h3>`;
-                    innerHTML += `
-                        <div class="mt-2">
-                            <select id="q_${q.id}_select" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white text-slate-700 font-medium">
-                                <option value="">請點選此處展開選項進行配對...</option>
-                    `;
-                    q.options.forEach(opt => {
-                        innerHTML += `<option value="${opt}">${opt}</option>`;
-                    });
-                    innerHTML += `</select></div>`;
-                }
-                else if (q.type === '問答題') {
-                    innerHTML += `<h3 class="text-base md:text-lg font-bold text-slate-800 mb-4 leading-relaxed">${q.question}</h3>`;
-                    innerHTML += `
-                        <div class="mt-2">
-                            <textarea id="q_${q.id}_text" rows="3" class="w-full border border-slate-300 rounded-xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-slate-700" placeholder="請在此輸入你的回答..."></textarea>
-                        </div>
-                    `;
+                    innerHTML += `<div class="bg-slate-50 p-5 rounded-xl border border-slate-100 leading-loose text-base md:text-lg text-slate-800 font-medium">${htmlText}</div>`;
                 }
 
                 card.innerHTML = innerHTML;
@@ -328,17 +330,8 @@
             });
         }
 
-        function showResultScreen(score) {
-            document.getElementById('loadingOverlay').classList.add('hidden');
-            document.getElementById('loadingOverlay').classList.remove('flex');
-            document.getElementById('quizView').classList.add('hidden');
-            document.getElementById('resultView').classList.remove('hidden');
-            document.getElementById('finalScoreDisplay').innerText = score;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
         function trySubmitQuiz() {
-            showModal('確認交卷', '確定要提交試卷嗎？提交後就不能再更改囉！', 'confirm', () => {
+            showModal('確認交卷', '請確認所有題目都已經選擇完畢。確定要交卷嗎？', 'confirm', () => {
                 processSubmission();
             });
         }
@@ -349,68 +342,48 @@
             let unAnswered = false;
 
             currentQuiz.forEach(q => {
-                let userAns = '';
-                let isCorrect = false;
-                let correctAnsDisplay = '';
+                if (q.type === '是非題' || q.type === '選擇題') {
+                    const checked = document.querySelector(`input[name="q_${q.id}"]:checked`);
+                    let userAns = checked ? checked.value : '';
+                    if (!userAns) unAnswered = true;
+                    let isCorrect = (userAns === q.answer);
+                    if (isCorrect) score += q.points;
 
-                try {
-                    if (q.type === '是非題' || q.type === '選擇題') {
-                        const checked = document.querySelector(`input[name="q_${q.id}"]:checked`);
-                        userAns = checked ? checked.value : '';
-                        isCorrect = (userAns === q.answer);
-                        correctAnsDisplay = q.answer;
-                    } 
-                    else if (q.type === '填空題') {
-                        let answers = [];
-                        let allCorrect = true;
-                        let missingAny = false;
-                        for (let i = 0; i < q.answer.length; i++) {
-                            const inputElem = document.getElementById(`q_${q.id}_blank_${i}`);
-                            const val = inputElem ? inputElem.value.trim() : '';
-                            answers.push(val);
-                            if (val === '') missingAny = true;
-                            // 寬鬆批改：輸入字串包含關鍵字即視為答對
-                            if (!val.includes(q.answer[i])) allCorrect = false;
-                        }
-                        userAns = answers.join(', ');
-                        if (missingAny) userAns = '';
-                        isCorrect = allCorrect;
-                        correctAnsDisplay = q.answer.join(', ');
-                    }
-                    else if (q.type === '配合題') {
-                        const selectElem = document.getElementById(`q_${q.id}_select`);
-                        userAns = selectElem ? selectElem.value : '';
-                        isCorrect = (userAns === q.answer);
-                        correctAnsDisplay = q.answer;
-                    }
-                    else if (q.type === '問答題') {
-                        const txtElem = document.getElementById(`q_${q.id}_text`);
-                        userAns = txtElem ? txtElem.value.trim() : '';
-                        isCorrect = q.answer.some(kw => userAns.includes(kw));
-                        correctAnsDisplay = q.answer[0];
-                    }
-                } catch (e) {
-                    console.error(e);
+                    details.push({
+                        type: q.type,
+                        question: q.question,
+                        points: q.points,
+                        user_ans: userAns,
+                        correct_ans: q.answer,
+                        is_correct: isCorrect,
+                        explanation: q.explanation
+                    });
+                } 
+                else if (q.type === '多格下拉題') {
+                    q.blanks.forEach((b, bIdx) => {
+                        const selectElem = document.getElementById(`q_${q.id}_${b.id}`);
+                        let userAns = selectElem ? selectElem.value : '';
+                        if (!userAns) unAnswered = true;
+                        let isCorrect = (userAns === b.answer);
+                        if (isCorrect) score += b.points;
+                        
+                        details.push({
+                            type: '下拉填空',
+                            question: q.question.replace(/【blank_\d】/g, '____') + ` (第 ${bIdx + 1} 格)`,
+                            points: b.points,
+                            user_ans: userAns,
+                            correct_ans: b.answer,
+                            is_correct: isCorrect,
+                            explanation: q.explanation
+                        });
+                    });
                 }
-
-                if (!userAns) unAnswered = true;
-                if (isCorrect) score += q.points;
-
-                details.push({
-                    type: q.type,
-                    question: q.question.replace(/\[blank\]/g, '____'),
-                    points: q.points,
-                    user_ans: userAns,
-                    correct_ans: correctAnsDisplay,
-                    is_correct: isCorrect,
-                    explanation: q.explanation
-                });
             });
 
             const payload = { student: studentData, score: score, details: details };
 
             if (unAnswered) {
-                showModal('未作答提醒', '還有題目尚未填寫完成，確定要現在交卷嗎？（未填寫題目將不予計分）', 'confirm', () => {
+                showModal('未作答提醒', '還有空格尚未填寫完成喔！\n（未填寫的題目將不予計分）\n確定要現在交卷嗎？', 'confirm', () => {
                     executeFetchPayload(payload, score);
                 });
             } else {
@@ -429,23 +402,32 @@
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify(payload)
                 });
-                
                 const result = await response.json();
                 
                 if (result.status === 'success' || result.status === 'partial_success') {
                     showResultScreen(score);
                 } else {
-                    showModal('批改提示', '試卷已完成批改！\n（' + result.message + '）', 'alert', () => {
-                        showResultScreen(score);
-                    });
+                    document.getElementById('resultMessage').innerText = `⚠️ 紀錄上傳失敗：${result.message} \n(但成績已為你計算完成！)`;
+                    document.getElementById('resultMessage').classList.replace('bg-emerald-50', 'bg-amber-50');
+                    document.getElementById('resultMessage').classList.replace('text-emerald-800', 'text-amber-800');
+                    showResultScreen(score);
                 }
             } catch (error) {
                 console.error('Fetch Error:', error);
-                // 網路或離線防護機制：確保學生作答完後一定能看到成績
-                showModal('批改完成', '成績計算完成！系統已記錄你的表現。', 'alert', () => {
-                    showResultScreen(score);
-                });
+                document.getElementById('resultMessage').innerText = "⚠️ 網路連線不穩或權限異常，無法連線至雲端試算表。\n但你的最終成績已為你結算完成！";
+                document.getElementById('resultMessage').classList.replace('bg-emerald-50', 'bg-red-50');
+                document.getElementById('resultMessage').classList.replace('text-emerald-800', 'text-red-800');
+                showResultScreen(score);
             }
+        }
+
+        function showResultScreen(score) {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            document.getElementById('loadingOverlay').classList.remove('flex');
+            document.getElementById('quizView').classList.add('hidden');
+            document.getElementById('resultView').classList.remove('hidden');
+            document.getElementById('finalScoreDisplay').innerText = score;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
